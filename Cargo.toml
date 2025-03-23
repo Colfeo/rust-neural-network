@@ -4,3 +4,11 @@ version = "0.1.0"
 edition = "2024"
 
 [dependencies]
+ndarray = "0.15"
+mnist = "0.6.0"
+rand = "0.9.0"
+
+[[ bin ]]
+name = "main"
+path = "src/main.rs"
+
