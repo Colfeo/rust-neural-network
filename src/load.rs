@@ -1,3 +1,6 @@
+// src/load.rs
+// Load the mnist data set and return the training and testing data and labels
+
 use mnist::*;
 use ndarray::prelude::*;
 
