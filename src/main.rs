@@ -4,8 +4,6 @@ mod neural_network;
 use ndarray::s;
 
 fn main() {
-        //println!("Hello, world!");
-
         // Load the data
         let (train_data, train_labels, _test_data, _test_labels) = load::mnist_loader(false);
         println!("Data loaded");
@@ -33,6 +31,9 @@ fn main() {
 
         // Create the neural network and run a forward pass
         let mut nn = neural_network::NeuralNetwork::new(784, 128, 10);
+        
+        /*                  
+        
         let (_z1, _a1, _z2, y) = nn.single_collumn_forward(&train_data.slice(s![0.., 0]).mapv(|x| x as f64));
         let (_z1_batch, _a1_batch, _z2_batch, y_batch) = nn.forward(&train_data.slice(s![.., 0..5]).mapv(|x| x as f64));  
         println!("Neural Network single column out shape : {:?}", y.shape()); 
@@ -58,14 +59,23 @@ fn main() {
             0.01,
         );
         println!("Weights and biases updated");
+        */
+
+        let _ = nn.gradient_descent(
+            &train_data.slice(s![.., 0..5_000]).mapv(|x| x as f64),
+            &train_labels.slice(s![.., 0..5_000]).mapv(|x| x as f64),
+            0.01,
+            50_000,
+        );
         
-
-
         // Save the model
         let _ = nn.save_weights();
 
+        /*
         //load the model
         let path = "weights";
-        let nn1 = neural_network::NeuralNetwork::load_neural_network(path);
+        let _nn1 = neural_network::NeuralNetwork::load_neural_network(path);
+        println!("Model loaded");
+        */
 
 }

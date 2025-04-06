@@ -15,6 +15,7 @@ pub struct NeuralNetwork {
 }
 
 impl NeuralNetwork {
+    // Random Constructor
     pub fn new(input_size: usize, hidden_size: usize, output_size: usize) -> Self {
         let mut rng = rand::rng();
 
@@ -36,60 +37,53 @@ impl NeuralNetwork {
         }
     }
     
+    // Forward pass for a single column input
     pub fn single_collumn_forward(&self, input: &Array1<f64>) -> (Array2<f64>, Array2<f64>, Array2<f64>, Array2<f64>) {
         let hidden_input = self.weight_1.dot(input) + &self.bias_1;
-        let hidden_output = hidden_input.mapv(_relu);
+        let hidden_output = hidden_input.mapv(relu);
 
         let final_input = self.weight_2.dot(&hidden_output) + &self.bias_2;
-        let final_output = _softmax_batch(&final_input);
+        let final_output = softmax_batch(&final_input);
 
         (hidden_input, hidden_output, final_input, final_output)
     }
-        
-    // Modify bias.clone by batch bias of size [nbr_neurons, 1]
+    
+    // Forward pass for a batch of inputs
     pub fn forward(&self, input: &Array2<f64>) -> (Array2<f64>, Array2<f64>, Array2<f64>, Array2<f64>) {
 
-        //println!("Input shape: {:?}", input.shape());
-        //println!("Weight 1 shape: {:?}", self.weight_1.shape());
 
         let hidden_input = self.weight_1.dot(input) + &self.bias_1;
-        let hidden_output = hidden_input.mapv(_relu);
+        let hidden_output = hidden_input.mapv(relu);
 
-        //println!("Hidden input shape: {:?}", hidden_input.shape());
-        //println!("Hidden output shape: {:?}", hidden_output.shape());
-        //println!("Weight 2 shape: {:?}", self.weight_2.shape());
         let final_input = self.weight_2.dot(&hidden_output) + &self.bias_2;
-        let final_output = _softmax_batch(&final_input);
+        let final_output = softmax_batch(&final_input);
 
-        (hidden_input, hidden_output, final_input, final_output)
-    }
-           
-    
+        (hidden_input, hidden_output, final_input, final_output) // (Z1, A1, Z2, Y = A1)
+    }   
+
+    // Backward pass
     pub fn backward(&self, x: &Array2<f64>, y: &Array2<f64>, t: &Array2<f64>, z1: &Array2<f64>, _z2: &Array2<f64>, 
                             a1: &Array2<f64>) 
                             -> (Array2<f64>, Array2<f64>, Array2<f64>, Array2<f64>) {
         // Compute the gradients for the weights and biases
-        //println!("shape of y : {:?}", y.shape());
-        //println!("shape of t : {:?}", t.shape());
+
         let m = x.shape()[1];
         let output_error = y - t;
-        //println!("Output error shape: {:?}", output_error.shape());
-        let weight2_delta = output_error.dot(&a1.t()) / m as f64;
-        //println!("Output error shape: {:?}", output_error.shape());
-        //let bias2_delta = output_error.sum_axis(ndarray::Axis(0));
-        
-        //println!("m: {:?}", m);
+
+        let weight2_delta = output_error.dot(&a1.t()) / m as f64;        
         let bias2_delta = output_error.sum_axis(ndarray::Axis(1)) / m as f64;
+
+
         let hidden_error = self.weight_2.t().dot(&output_error) 
-            * z1.mapv(_relu_derivative);
+            * z1.mapv(relu_derivative);
 
         let weight1_delta = hidden_error.dot(&x.t()) / m as f64;
-        //println!("Hidden error shape: {:?}", hidden_error.shape());
         let bias1_delta = hidden_error.sum_axis(ndarray::Axis(1)) / m as f64;
 
-        (weight1_delta, bias1_delta.insert_axis(ndarray::Axis(1)), weight2_delta, bias2_delta.insert_axis(ndarray::Axis(1)))
+        (weight1_delta, bias1_delta.insert_axis(ndarray::Axis(1)), weight2_delta, bias2_delta.insert_axis(ndarray::Axis(1))) // dW1, dB1, dW2, dB2
     }
-    
+
+    // Update weights and biases
     pub fn update_weights(&mut self, weight1_delta: &Array2<f64>, bias1_delta: &Array2<f64>, 
                         weight2_delta: &Array2<f64>, bias2_delta: &Array2<f64>, learning_rate: f64) {
         // Update weights and biases using the deltas
@@ -105,7 +99,21 @@ impl NeuralNetwork {
         self.bias_2 = &self.bias_2 - bias2_delta * learning_rate;
     
     }
-        
+
+    // Train the Neural Network
+    pub fn gradient_descent(&mut self, x: &Array2<f64>, t: &Array2<f64>, learning_rate: f64, iterations: usize) {
+        // Perform gradient descent
+        for i in 0..iterations {
+            let (z1, a1, z2, y) = self.forward(&x);
+            let (weight1_delta, bias1_delta, weight2_delta, bias2_delta) = self.backward(&x, &y, &t, &z1, &z2, &a1);
+            self.update_weights(&weight1_delta, &bias1_delta, &weight2_delta, &bias2_delta, learning_rate);
+            if i % 50 == 0 {
+                let predictions = get_predictions(&y);
+                let label = get_predictions(&t);
+                println!("Iteration: {}, Precission: {}", i, get_accuracy(&predictions,&label));
+            }
+        }
+    }
 
     //Add bias to the weight matrix
     pub fn save_weights(&self) -> std::io::Result<()> {
@@ -137,7 +145,7 @@ impl NeuralNetwork {
         Ok(())
     }
 
-
+    // Load weights and biases from files
     pub fn load_neural_network(weights_dir: &str) -> std::io::Result<Self> {
         // Define the file paths
         let input_hidden_path = format!("{}/weight_1.json", weights_dir);
@@ -174,26 +182,83 @@ impl NeuralNetwork {
         bias_2,
         })
     }
+    
+    // Compute Precission on validation data
+    pub fn performance(&self, validation_data: &Array2<f64>, validation_labels: &Array2<f64>) -> (f64, f64, f64) {
+        let (_, _, _, predictions) = self.forward(validation_data);
+        let predicted_labels = get_predictions(&predictions);
+        let actual_labels = get_predictions(validation_labels);
 
-}
+        let accuracy = get_accuracy(&predicted_labels, &actual_labels);
+        let precision = self.compute_precision(&predicted_labels, &actual_labels);
+        let recall = self.compute_recall(&predicted_labels, &actual_labels);
+
+        println!("Validation Accuracy: {}", accuracy);
+        println!("Validation Precision: {}", precision);
+        println!("Validation Recall: {}", recall);
+
+        (accuracy, precision, recall)
+    }
+
+    fn compute_precision(&self, predictions: &Array1<f64>, actual_labels: &Array1<f64>) -> f64 {
+        let mut true_positive = 0;
+        let mut false_positive = 0;
+
+        for (pred, actual) in predictions.iter().zip(actual_labels.iter()) {
+            if *pred == 1.0 {
+                if *actual == 1.0 {
+                    true_positive += 1;
+                } else {
+                    false_positive += 1;
+                }
+            }
+        }
+
+        if true_positive + false_positive == 0 {
+            0.0
+        } else {
+            true_positive as f64 / (true_positive + false_positive) as f64
+        }
+    }
+
+    fn compute_recall(&self, predictions: &Array1<f64>, actual_labels: &Array1<f64>) -> f64 {
+        let mut true_positive = 0;
+        let mut false_negative = 0;
+
+        for (pred, actual) in predictions.iter().zip(actual_labels.iter()) {
+            if *actual == 1.0 {
+                if *pred == 1.0 {
+                    true_positive += 1;
+                } else {
+                    false_negative += 1;
+                }
+            }
+        }
+
+        if true_positive + false_negative == 0 {
+            0.0
+        } else {
+            true_positive as f64 / (true_positive + false_negative) as f64
+        }
+    }
+    
+    }
 
 
-fn _relu(x: f64) -> f64 {
+fn relu(x: f64) -> f64 {
     if x > 0.0 { x } else { 0.0 }
+ 
 }
-
-fn _relu_derivative(x: f64) -> f64 {
+fn relu_derivative(x: f64) -> f64 {
     if x > 0.0 { 1.0 } else { 0.0 }
 }
-
 fn _softmax(x: &Array1<f64>) -> Array1<f64> {
     let max = x.fold(f64::NEG_INFINITY, |a, &b| a.max(b));
     let exp_x = x.mapv(|v| (v - max).exp());
     let sum_exp_x = exp_x.sum();
     exp_x / sum_exp_x
 }
-
-fn _softmax_batch(x: &Array2<f64>) -> Array2<f64> {
+fn softmax_batch(x: &Array2<f64>) -> Array2<f64> {
     let max = x.fold_axis(ndarray::Axis(0), f64::NEG_INFINITY, |a, &b| a.max(b));
     let exp_x = x - &max.insert_axis(ndarray::Axis(0));
     let exp_x = exp_x.mapv(|v| v.exp());
@@ -201,3 +266,25 @@ fn _softmax_batch(x: &Array2<f64>) -> Array2<f64> {
     
     exp_x / sum_exp_x
 }
+fn get_predictions(a2: &Array2<f64>) -> Array1<f64> {
+    let prediction = a2.map_axis(ndarray::Axis(0), |col| {
+        col.iter()
+            .enumerate()
+            .max_by(|(_, a), (_, b)| a.partial_cmp(b).unwrap())
+            .map(|(index, _)| index)
+            .unwrap()
+    });
+    prediction.mapv(|x| x as f64)
+}
+fn get_accuracy(predictions: &Array1<f64>, y: &Array1<f64>) -> f64 {
+    let correct = predictions
+        .iter()
+        .zip(y.iter())
+        .filter(|(pred, actual)| pred == actual)
+        .count();
+    correct as f64 / y.len() as f64
+}
+
+
+        
+

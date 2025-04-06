@@ -15,6 +15,10 @@ name = "main"
 path = "src/main.rs"
 
 [[ bin ]]
-name = "test"
-path = "src/test.rs"
+name = "train"
+path = "src/train.rs"
+
+[[ bin ]]
+name = "performance"
+path = "src/performance.rs"
 
