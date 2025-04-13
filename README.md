@@ -90,10 +90,10 @@ or if build for for release :
 ├── Cargo.toml  # toml with dependencies
 ├── README.md   # This README file
 ├── data        # Dataset directory 
-│   ├── t10k-images-idx3-ubyte.gz # Testing dataset (to be downloaded)
-│   ├── t10k-labels-idx1-ubyte.gz # Testing dataset (to be downloaded)
-│   ├── train-images-idx3-ubyte.gz # Testing dataset (to be downloaded)
-│   └── train-labels-idx1-ubyte.gz # Testing dataset (to be downloaded)
+│   ├── t10k-images-idx3-ubyte # Testing dataset (to be downloaded)
+│   ├── t10k-labels-idx1-ubyte # Testing dataset (to be downloaded)
+│   ├── train-images-idx3-ubyte # Testing dataset (to be downloaded)
+│   └── train-labels-idx1-ubyte # Testing dataset (to be downloaded)
 ├── src
 │   ├── load.rs            # Function for loading the data set
 │   ├── main.rs            # TO BE 
