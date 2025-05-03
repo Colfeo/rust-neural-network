@@ -35,7 +35,7 @@ fn main() {
             &train_data.slice(s![.., ..]).mapv(|x| x as f64),
             &train_labels.slice(s![..,..]).mapv(|x| x as f64),
             0.01,
-            500_000,
+            1_000,
         );
         
         // Save the model
