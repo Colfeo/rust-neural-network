@@ -12,7 +12,7 @@ fn main() {
 
     
     // Reshape the labels
-    let test_labels = test_labels.into_shape((10000, 1)).expect("Reshape failed");
+    let test_labels = test_labels.to_shape((10000, 1)).expect("Reshape failed");
     let mut one_hot_labels = ndarray::Array2::<f64>::zeros((10000, 10));
     for (i, label) in test_labels.iter().enumerate() {
         let label = *label as usize;
@@ -24,7 +24,7 @@ fn main() {
     let test_labels = one_hot_labels.t();
 
     // Reshape the data
-    let test_data = test_data.into_shape((10000, 28 * 28)).expect("Reshape failed");
+    let test_data = test_data.to_shape((10000, 28 * 28)).expect("Reshape failed");
     let test_data = test_data.t().to_owned();
 
     //load the model
