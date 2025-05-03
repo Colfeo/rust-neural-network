@@ -36,14 +36,6 @@ fn main() {
     let (_accuracy, _precision, _recall) = nn.performance(&test_data.mapv(|x| x as f64),
                                                     &test_labels.mapv(|x| x as f64));
     println!("Neural Network tested !");
-
-
-
-    
-
-
-    
-
     
 
 }

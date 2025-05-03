@@ -12,7 +12,7 @@ fn main() {
         println!("Data loaded");
         
         // Reshape the labels
-        let train_labels = train_labels.into_shape((50000, 1)).expect("Reshape failed");
+        let train_labels = train_labels.to_shape((50000, 1)).expect("Reshape failed");
         let mut one_hot_labels = ndarray::Array2::<f64>::zeros((50000, 10));
         for (i, label) in train_labels.iter().enumerate() {
             let label = *label as usize;
@@ -24,7 +24,7 @@ fn main() {
         let train_labels = one_hot_labels.t();
 
         // Reshape the data
-        let train_data = train_data.into_shape((50000, 28 * 28)).expect("Reshape failed");
+        let train_data = train_data.to_shape((50000, 28 * 28)).expect("Reshape failed");
         let train_data = train_data.t().to_owned();
 
 
