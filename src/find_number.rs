@@ -25,7 +25,8 @@ fn main() -> Result<(), Box<dyn std::error::Error>> {
 
     // Load the image
     //let path = "/Users/damienvanoldeneel/Downloads/image_test_mnist/6_mnist_type.png";
-    let path = "/Users/damienvanoldeneel/Downloads/image_test_mnist/8_sans_fond.jpeg";
+    let path = "/Users/damienvanoldeneel/Downloads/image_test_mnist/6.1_mnist_type.jpeg";
+    //let path = "/Users/damienvanoldeneel/Downloads/image_test_mnist/8_sans_fond.jpeg";
     let img = ImageReader::open(path)?.decode()?;
 
     // Convert the image to grayscale
