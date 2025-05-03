@@ -37,18 +37,6 @@ impl NeuralNetwork {
         }
     }
     
-    // Forward pass for a single column input
-    /* 
-    pub fn single_collumn_forward(&self, input: &Array1<f64>) -> (Array2<f64>, Array2<f64>, Array2<f64>, Array2<f64>) {
-        let hidden_input = self.weight_1.dot(input) + &self.bias_1;
-        let hidden_output = hidden_input.mapv(relu);
-
-        let final_input = self.weight_2.dot(&hidden_output) + &self.bias_2;
-        let final_output = softmax_batch(&final_input);
-
-        (hidden_input, hidden_output, final_input, final_output)
-    }
-    */
     
     // Forward pass for a batch of inputs
     pub fn forward(&self, input: &Array2<f64>) -> (Array2<f64>, Array2<f64>, Array2<f64>, Array2<f64>) {
